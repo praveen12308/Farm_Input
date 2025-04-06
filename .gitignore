@@ -1,0 +1,45 @@
+# === DEPENDENCIES ===
+client/node_modules/
+server/node_modules/
+.pnp/
+.pnp.js
+
+# === BUILD OUTPUT ===
+client/build/
+server/dist/
+coverage/
+
+# === ENV FILES ===
+.env
+client/.env
+client/.env.local
+client/.env.development.local
+client/.env.test.local
+client/.env.production.local
+
+server/.env
+server/.env.local
+server/.env.development.local
+server/.env.test.local
+server/.env.production.local
+
+# === LOCK FILES ===
+client/package-lock.json
+server/pnpm-lock.yaml
+
+# === LOG FILES ===
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# === SYSTEM FILES ===
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# === IDE FILES ===
+.vscode/
+.idea/
+*.swp
+*.swo
