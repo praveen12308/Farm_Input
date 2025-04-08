@@ -12,10 +12,12 @@ export default function FarmerInputDashboard() {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState(initialState);
   const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    const numberFields = ["contactNumber", "surveyNumber", "seedQuantity", "produceQuantity", "landArea"];
+    const numberFields = ["contactNumber"];
     if (numberFields.includes(name) && !/^\d*\.?\d*$/.test(value)) {
       setErrors((prev) => ({ ...prev, [name]: "Only numbers are allowed" }));
       return;
@@ -27,17 +29,18 @@ export default function FarmerInputDashboard() {
   const validateContactNumber = () => {
     const { contactNumber } = formData;
     if (!/^\d{10}$/.test(contactNumber)) {
-      setErrors((prev) => ({ ...prev, contactNumber: "Enter a valid 10-digit number" }));
-      return false;
+      return "Enter a valid 10-digit number";
     }
-    return true;
+    return "";
   };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!validateStep()) return;
 
+    setIsSubmitting(true);
     try {
       const response = await fetch("http://localhost:5000/api/submit", {
         method: "POST",
@@ -57,51 +60,64 @@ export default function FarmerInputDashboard() {
     } catch (error) {
       console.error("Error submitting data:", error);
       alert("An error occurred while saving data. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
 
   const validateStep = () => {
     let newErrors = {};
     if (currentStep === 1) {
       if (!formData.farmerId.trim()) newErrors.farmerId = "Farmer ID is required";
       if (!formData.farmerName.trim()) newErrors.farmerName = "Farmer Name is required";
-      if (!validateContactNumber()) newErrors.contactNumber = "Enter a valid 10-digit number";
+      const contactError = validateContactNumber();
+      if (contactError) newErrors.contactNumber = contactError;
     }
     if (currentStep === 2) {
       if (!formData.surveyNumber.trim()) newErrors.surveyNumber = "Survey Number is required";
-      if (!formData.landArea.trim() || isNaN(Number(formData.landArea))) newErrors.landArea = "Enter a valid land area";
+      if (!formData.landArea.trim()) newErrors.landArea = "Land Area is required";
       if (!formData.soilType) newErrors.soilType = "Select Soil Type";
       if (!formData.irrigationSource) newErrors.irrigationSource = "Select Irrigation Source";
       if (!formData.cropSeason) newErrors.cropSeason = "Select Crop Season";
     }
     if (currentStep === 3) {
-      if (!formData.seedQuantity.trim() || isNaN(Number(formData.seedQuantity)))
-        newErrors.seedQuantity = "Enter a valid seed quantity";
-      if (!formData.produceQuantity.trim() || isNaN(Number(formData.produceQuantity)))
-        newErrors.produceQuantity = "Enter a valid produce quantity";
-      if (!formData.cropType)
-        newErrors.cropType = "Select Crop Type";
-      if (!formData.fertilizerUsed)
-        newErrors.fertilizerUsed = "Select Fertilizer Used";
-      if (!formData.sowingDate)
+      if (!formData.seedQuantity.trim()) newErrors.seedQuantity = "Seed Quantity is required";
+      if (!formData.produceQuantity.trim()) newErrors.produceQuantity = "Produce Quantity is required";
+      if (!formData.cropType) newErrors.cropType = "Select Crop Type";
+      if (!formData.fertilizerUsed) newErrors.fertilizerUsed = "Select Fertilizer Used";
+
+      const today = new Date().toISOString().split("T")[0];
+
+      if (!formData.sowingDate) {
         newErrors.sowingDate = "Sowing Date is required";
+      } else if (formData.sowingDate > today) {
+        newErrors.sowingDate = "Sowing Date cannot be in the future";
+      }
+
       if (!formData.harvestDate) {
         newErrors.harvestDate = "Harvest Date is required";
-      } else {
-        const today = new Date().toISOString().split("T")[0];
-        if (formData.harvestDate > today) {
-          newErrors.harvestDate = "Harvest Date cannot be in the future";
-        }
+      } else if (formData.harvestDate > today) {
+        newErrors.harvestDate = "Harvest Date cannot be in the future";
       }
+
       if (formData.sowingDate && formData.harvestDate) {
         const sowing = new Date(formData.sowingDate);
         const harvest = new Date(formData.harvestDate);
+
         if (harvest <= sowing) {
           newErrors.sowingDate = "Sowing Date must be before Harvest Date";
-          newErrors.harvestDate = "Harvesting Date must be After Sowing Date";
+          newErrors.harvestDate = "Harvesting Date must be after Sowing Date";
+        } else {
+          const dayDiff = (harvest - sowing) / (1000 * 60 * 60 * 24);
+          if (dayDiff < 20) {
+            newErrors.harvestDate = "Minimum 20 days after sowing date";
+          }
         }
       }
+
     }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -265,7 +281,18 @@ export default function FarmerInputDashboard() {
           </div>
           <div className="button-container">
             <button className="button" onClick={handleBack} >Back</button>
-            <button className="button submit" onClick={handleSubmit}>Submit</button>
+            <button className="button submit" onClick={handleSubmit} disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <span className="spinner"></span> Submitting...
+                </>
+              ) : (
+                "Submit"
+              )}
+
+            </button>
+
+
           </div>
         </div>
       )}
