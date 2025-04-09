@@ -128,7 +128,7 @@ body {
   }
   
   input.error, select.error {
-    border: 2px solid rgb(206, 17, 17);
+    border: 1px solid rgb(206, 17, 17);
   }
   .spinner {
     width: 12px;

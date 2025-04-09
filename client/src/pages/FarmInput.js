@@ -289,10 +289,7 @@ export default function FarmerInputDashboard() {
               ) : (
                 "Submit"
               )}
-
             </button>
-
-
           </div>
         </div>
       )}
